@@ -115,6 +115,7 @@ public enum BuiltinFunctionName {
   COUNT(FunctionName.of("count")),
   MIN(FunctionName.of("min")),
   MAX(FunctionName.of("max")),
+  APPROX_PERCENTILE(FunctionName.of("approx_percentile")),
 
   /**
    * Text Functions.

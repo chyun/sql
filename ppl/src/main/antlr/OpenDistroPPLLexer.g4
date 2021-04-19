@@ -143,6 +143,7 @@ SUMSQ:                              'SUMSQ';
 VAR:                                'VAR';
 VARP:                               'VARP';
 PERCENTILE:                         'PERCENTILE';
+APPROX_PERCENTILE:                  'APPROX_PERCENTILE';
 FIRST:                              'FIRST';
 LAST:                               'LAST';
 LIST:                               'LIST';

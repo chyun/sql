@@ -40,6 +40,7 @@ import com.amazon.opendistroforelasticsearch.sql.elasticsearch.storage.serializa
 import com.amazon.opendistroforelasticsearch.sql.expression.DSL;
 import com.amazon.opendistroforelasticsearch.sql.expression.Expression;
 import com.amazon.opendistroforelasticsearch.sql.expression.NamedExpression;
+import com.amazon.opendistroforelasticsearch.sql.expression.aggregation.ApproxPercentileAggregator;
 import com.amazon.opendistroforelasticsearch.sql.expression.aggregation.AvgAggregator;
 import com.amazon.opendistroforelasticsearch.sql.expression.aggregation.NamedAggregator;
 import com.amazon.opendistroforelasticsearch.sql.expression.config.ExpressionConfig;
@@ -242,6 +243,52 @@ class AggregationQueryBuilderTest {
   }
 
   @Test
+  void should_build_composite_aggregation_for_approx_percentile() {
+    doAnswer(invocation -> {
+      Expression expr = invocation.getArgument(0);
+      return expr.toString();
+    }).when(serializer).serialize(any());
+    assertEquals(
+        "{\n"
+            + "  \"composite_buckets\" : {\n"
+            + "    \"composite\" : {\n"
+            + "      \"size\" : 1000,\n"
+            + "      \"sources\" : [ {\n"
+            + "        \"age_plus\" : {\n"
+            + "          \"terms\" : {\n"
+            + "            \"script\" : {\n"
+            + "              \"source\" : \"asin(age)\",\n"
+            + "              \"lang\" : \"opendistro_expression\"\n"
+            + "            },\n"
+            + "            \"missing_bucket\" : true,\n"
+            + "            \"order\" : \"asc\"\n"
+            + "          }\n"
+            + "        }\n"
+            + "      } ]\n"
+            + "    },\n"
+            + "    \"aggregations\" : {\n"
+            + "      \"approx_percentile(age_plus)\" : {\n"
+            + "        \"percentiles\" : {\n"
+            + "          \"field\" : \"age_plus\",\n"
+            + "          \"percents\" : [ 99.9 ],\n"
+            + "          \"keyed\" : true,\n"
+            + "          \"tdigest\" : {\n"
+            + "            \"compression\" : 100.0\n"
+            + "          }\n"
+            + "        }\n"
+            + "      }\n"
+            + "    }\n"
+            + "  }\n"
+            + "}",
+        buildQuery(
+            Arrays.asList(
+                named("approx_percentile(age_plus)", new ApproxPercentileAggregator(
+                    Arrays.asList(ref("age_plus", DOUBLE)), DOUBLE)
+                    .initValues(Arrays.asList(DSL.literal(99.9))))),
+            Arrays.asList(named("age_plus", dsl.asin(ref("age", INTEGER))))));
+  }
+
+  @Test
   void should_build_composite_aggregation_follow_with_order_by_position() {
     assertEquals(
         "{\n"
@@ -316,27 +363,27 @@ class AggregationQueryBuilderTest {
   @Test
   void should_build_filter_aggregation() {
     assertEquals(
-        "{\n" 
+        "{\n"
             + "  \"avg(age) filter(where age > 34)\" : {\n"
-            + "    \"filter\" : {\n" 
-            + "      \"range\" : {\n" 
-            + "        \"age\" : {\n" 
-            + "          \"from\" : 20,\n" 
-            + "          \"to\" : null,\n" 
-            + "          \"include_lower\" : false,\n" 
-            + "          \"include_upper\" : true,\n" 
-            + "          \"boost\" : 1.0\n" 
-            + "        }\n" 
-            + "      }\n" 
-            + "    },\n" 
-            + "    \"aggregations\" : {\n" 
-            + "      \"avg(age) filter(where age > 34)\" : {\n" 
-            + "        \"avg\" : {\n" 
-            + "          \"field\" : \"age\"\n" 
-            + "        }\n" 
-            + "      }\n" 
-            + "    }\n" 
-            + "  }\n" 
+            + "    \"filter\" : {\n"
+            + "      \"range\" : {\n"
+            + "        \"age\" : {\n"
+            + "          \"from\" : 20,\n"
+            + "          \"to\" : null,\n"
+            + "          \"include_lower\" : false,\n"
+            + "          \"include_upper\" : true,\n"
+            + "          \"boost\" : 1.0\n"
+            + "        }\n"
+            + "      }\n"
+            + "    },\n"
+            + "    \"aggregations\" : {\n"
+            + "      \"avg(age) filter(where age > 34)\" : {\n"
+            + "        \"avg\" : {\n"
+            + "          \"field\" : \"age\"\n"
+            + "        }\n"
+            + "      }\n"
+            + "    }\n"
+            + "  }\n"
             + "}",
         buildQuery(
             Arrays.asList(named("avg(age) filter(where age > 34)",
@@ -348,43 +395,43 @@ class AggregationQueryBuilderTest {
   @Test
   void should_build_filter_aggregation_group_by() {
     assertEquals(
-        "{\n" 
-            + "  \"composite_buckets\" : {\n" 
-            + "    \"composite\" : {\n" 
-            + "      \"size\" : 1000,\n" 
-            + "      \"sources\" : [ {\n" 
-            + "        \"gender\" : {\n" 
-            + "          \"terms\" : {\n" 
-            + "            \"field\" : \"gender\",\n" 
-            + "            \"missing_bucket\" : true,\n" 
-            + "            \"order\" : \"asc\"\n" 
-            + "          }\n" 
-            + "        }\n" 
-            + "      } ]\n" 
-            + "    },\n" 
-            + "    \"aggregations\" : {\n" 
-            + "      \"avg(age) filter(where age > 34)\" : {\n" 
-            + "        \"filter\" : {\n" 
-            + "          \"range\" : {\n" 
-            + "            \"age\" : {\n" 
-            + "              \"from\" : 20,\n" 
-            + "              \"to\" : null,\n" 
-            + "              \"include_lower\" : false,\n" 
-            + "              \"include_upper\" : true,\n" 
-            + "              \"boost\" : 1.0\n" 
-            + "            }\n" 
-            + "          }\n" 
-            + "        },\n" 
-            + "        \"aggregations\" : {\n" 
-            + "          \"avg(age) filter(where age > 34)\" : {\n" 
-            + "            \"avg\" : {\n" 
-            + "              \"field\" : \"age\"\n" 
-            + "            }\n" 
-            + "          }\n" 
-            + "        }\n" 
-            + "      }\n" 
-            + "    }\n" 
-            + "  }\n" 
+        "{\n"
+            + "  \"composite_buckets\" : {\n"
+            + "    \"composite\" : {\n"
+            + "      \"size\" : 1000,\n"
+            + "      \"sources\" : [ {\n"
+            + "        \"gender\" : {\n"
+            + "          \"terms\" : {\n"
+            + "            \"field\" : \"gender\",\n"
+            + "            \"missing_bucket\" : true,\n"
+            + "            \"order\" : \"asc\"\n"
+            + "          }\n"
+            + "        }\n"
+            + "      } ]\n"
+            + "    },\n"
+            + "    \"aggregations\" : {\n"
+            + "      \"avg(age) filter(where age > 34)\" : {\n"
+            + "        \"filter\" : {\n"
+            + "          \"range\" : {\n"
+            + "            \"age\" : {\n"
+            + "              \"from\" : 20,\n"
+            + "              \"to\" : null,\n"
+            + "              \"include_lower\" : false,\n"
+            + "              \"include_upper\" : true,\n"
+            + "              \"boost\" : 1.0\n"
+            + "            }\n"
+            + "          }\n"
+            + "        },\n"
+            + "        \"aggregations\" : {\n"
+            + "          \"avg(age) filter(where age > 34)\" : {\n"
+            + "            \"avg\" : {\n"
+            + "              \"field\" : \"age\"\n"
+            + "            }\n"
+            + "          }\n"
+            + "        }\n"
+            + "      }\n"
+            + "    }\n"
+            + "  }\n"
             + "}",
         buildQuery(
             Arrays.asList(named("avg(age) filter(where age > 34)",
@@ -407,14 +454,14 @@ class AggregationQueryBuilderTest {
 
   @SneakyThrows
   private String buildQuery(List<NamedAggregator> namedAggregatorList,
-                            List<NamedExpression> groupByList) {
+      List<NamedExpression> groupByList) {
     return buildQuery(namedAggregatorList, groupByList, null);
   }
 
   @SneakyThrows
   private String buildQuery(List<NamedAggregator> namedAggregatorList,
-                            List<NamedExpression> groupByList,
-                            List<Pair<Sort.SortOption, Expression>> sortList) {
+      List<NamedExpression> groupByList,
+      List<Pair<Sort.SortOption, Expression>> sortList) {
     ObjectMapper objectMapper = new ObjectMapper();
     return objectMapper.readTree(
         queryBuilder.buildAggregationBuilder(namedAggregatorList, groupByList, sortList).get(0)

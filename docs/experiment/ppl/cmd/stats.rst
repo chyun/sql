@@ -15,19 +15,21 @@ Description
 
 The following table catalogs the aggregation functions and also indicates how the NULL/MISSING values is handled:
 
-+----------+-------------+-------------+
-| Function | NULL        | MISSING     |
-+----------+-------------+-------------+
-| COUNT    | Not counted | Not counted |
-+----------+-------------+-------------+
-| SUM      | Ignore      | Ignore      |
-+----------+-------------+-------------+
-| AVG      | Ignore      | Ignore      |
-+----------+-------------+-------------+
-| MAX      | Ignore      | Ignore      |
-+----------+-------------+-------------+
-| MIN      | Ignore      | Ignore      |
-+----------+-------------+-------------+
++------------------------+-------------+-------------+
+| Function               | NULL        | MISSING     |
++------------------------+-------------+-------------+
+| COUNT                  | Not counted | Not counted |
++------------------------+-------------+-------------+
+| SUM                    | Ignore      | Ignore      |
++------------------------+-------------+-------------+
+| AVG                    | Ignore      | Ignore      |
++------------------------+-------------+-------------+
+| MAX                    | Ignore      | Ignore      |
++------------------------+-------------+-------------+
+| MIN                    | Ignore      | Ignore      |
++------------------------+-------------+-------------+
+| APPROX_PERCENTILE      | Ignore      | Ignore      |
++------------------------+-------------+-------------+
 
 
 Syntax
@@ -134,3 +136,18 @@ PPL query::
     | 36         | 32         | M        |
     +------------+------------+----------+
 
+Example 6: Calculate the approx percentile of a field
+================================================================
+
+The example calculates the approx percentile value of all the accounts.
+
+PPL query::
+
+    od> source=accounts | stats approx_percentile(age);
+    fetched rows / total rows = 1/1
+    +--------------------------+
+    | approx_percentile(age)   |
+    |--------------------------+
+    | 28                       |
+    | 36                       |
+    +--------------------------+

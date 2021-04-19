@@ -23,12 +23,17 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import lombok.experimental.UtilityClass;
 import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.Aggregations;
 import org.elasticsearch.search.aggregations.bucket.composite.CompositeAggregation;
 import org.elasticsearch.search.aggregations.bucket.filter.Filter;
 import org.elasticsearch.search.aggregations.metrics.NumericMetricsAggregation;
+import org.elasticsearch.search.aggregations.metrics.Percentile;
+import org.elasticsearch.search.aggregations.metrics.PercentileRanks;
+import org.elasticsearch.search.aggregations.metrics.Percentiles;
 
 /**
  * AggregationResponseParser.
@@ -90,6 +95,12 @@ public class ElasticsearchAggregationResponseParser {
         Map<String, Object> intermediateMap = parseInternal(internalAgg);
         resultMap.put(internalAgg.getName(), intermediateMap.get(internalAgg.getName()));
       });
+    } else if (aggregation instanceof Percentiles) {
+      Iterable<Percentile> percentiles = (Iterable<Percentile>) aggregation;
+      resultMap.putAll(StreamSupport.stream(percentiles.spliterator(), false)
+          .collect(Collectors.toMap(
+              (percentile) -> String.format("%s", aggregation.getName()),
+              Percentile::getValue)));
     } else {
       throw new IllegalStateException("unsupported aggregation type " + aggregation.getType());
     }

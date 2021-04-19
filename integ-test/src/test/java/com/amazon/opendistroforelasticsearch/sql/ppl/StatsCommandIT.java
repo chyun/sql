@@ -35,6 +35,14 @@ public class StatsCommandIT extends PPLIntegTestCase {
   }
 
   @Test
+  public void testApproxPercentile() throws IOException {
+    JSONObject response =
+        executeQuery(String.format("source=%s |eval age_plus = age + 1 | stats approx_percentile<99.9>(age_plus) as quantile", TEST_INDEX_ACCOUNT));
+    verifySchema(response, schema("quantile", null, "double"));
+    verifyDataRows(response, rows(41D));
+  }
+
+  @Test
   public void testStatsAvg() throws IOException {
     JSONObject response =
         executeQuery(String.format("source=%s | stats avg(age)", TEST_INDEX_ACCOUNT));

@@ -47,12 +47,17 @@ public abstract class Aggregator<S extends AggregationState>
   @Getter
   private final FunctionName functionName;
   @Getter
-  private final List<Expression> arguments;
+  protected final List<Expression> arguments;
   protected final ExprCoreType returnType;
   @Setter
   @Getter
   @Accessors(fluent = true)
   protected Expression condition;
+
+  @Setter
+  @Getter
+  @Accessors(fluent = true)
+  protected List<Expression> initValues;
 
   /**
    * Create an {@link AggregationState} which will be used for aggregation.

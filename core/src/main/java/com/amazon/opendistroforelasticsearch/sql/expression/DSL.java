@@ -461,6 +461,11 @@ public class DSL {
     return function(BuiltinFunctionName.NOT_LIKE, expressions);
   }
 
+  public Aggregator approxPercentile(Expression initValue, Expression... expressions) {
+    return aggregate(BuiltinFunctionName.APPROX_PERCENTILE, expressions)
+        .initValues(Arrays.asList(initValue));
+  }
+
   public Aggregator avg(Expression... expressions) {
     return aggregate(BuiltinFunctionName.AVG, expressions);
   }

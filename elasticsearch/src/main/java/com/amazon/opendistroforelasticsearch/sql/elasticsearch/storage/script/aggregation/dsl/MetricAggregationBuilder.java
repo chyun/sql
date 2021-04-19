@@ -31,6 +31,7 @@ import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.AggregatorFactories;
 import org.elasticsearch.search.aggregations.bucket.filter.FilterAggregationBuilder;
+import org.elasticsearch.search.aggregations.metrics.PercentilesAggregationBuilder;
 import org.elasticsearch.search.aggregations.support.ValuesSourceAggregationBuilder;
 
 /**
@@ -81,6 +82,12 @@ public class MetricAggregationBuilder
         return make(AggregationBuilders.min(name), expression, condition, name);
       case "max":
         return make(AggregationBuilders.max(name), expression, condition, name);
+      case "approx_percentile":
+        List<Expression> initValues = node.getDelegated().initValues();
+        Double initValue = initValues.get(0).valueOf(null).doubleValue();
+        return make(
+            new PercentilesAggregationBuilder(name, new double[] {initValue}, null),
+            expression, condition, name);
       default:
         throw new IllegalStateException(
             String.format("unsupported aggregator %s", node.getFunctionName().getFunctionName()));
@@ -100,9 +107,10 @@ public class MetricAggregationBuilder
   /**
    * Replace star or literal with Elasticsearch metadata field "_index". Because:
    * 1) Analyzer already converts * to string literal, literal check here can handle
-   *    both COUNT(*) and COUNT(1).
+   * both COUNT(*) and COUNT(1).
    * 2) Value count aggregation on _index counts all docs (after filter), therefore
-   *    it has same semantics as COUNT(*) or COUNT(1).
+   * it has same semantics as COUNT(*) or COUNT(1).
+   *
    * @param countArg count function argument
    * @return Reference to _index if literal, otherwise return original argument expression
    */
@@ -115,9 +123,10 @@ public class MetricAggregationBuilder
 
   /**
    * Make builder to build FilterAggregation for aggregations with filter in the bucket.
+   *
    * @param subAggBuilder AggregationBuilder instance which the filter is applied to.
-   * @param condition Condition expression in the filter.
-   * @param name Name of the FilterAggregation instance to build.
+   * @param condition     Condition expression in the filter.
+   * @param name          Name of the FilterAggregation instance to build.
    * @return {@link FilterAggregationBuilder}.
    */
   private FilterAggregationBuilder makeFilterAggregation(AggregationBuilder subAggBuilder,

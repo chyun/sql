@@ -67,6 +67,7 @@ import lombok.Getter;
  * Expression}.
  */
 public class ExpressionAnalyzer extends AbstractNodeVisitor<Expression, AnalysisContext> {
+
   @Getter
   private final BuiltinFunctionRepository repository;
   private final DSL dsl;
@@ -149,9 +150,14 @@ public class ExpressionAnalyzer extends AbstractNodeVisitor<Expression, Analysis
     if (builtinFunctionName.isPresent()) {
       Expression arg = node.getField().accept(this, context);
       Aggregator aggregator = (Aggregator) repository.compile(
-              builtinFunctionName.get().getName(), Collections.singletonList(arg));
+          builtinFunctionName.get().getName(), Collections.singletonList(arg));
       if (node.getCondition() != null) {
         aggregator.condition(analyze(node.getCondition(), context));
+      }
+      if (node.getArgList().size() > 0) {
+        aggregator.initValues(
+            node.getArgList().stream().map(param -> analyze(param, context))
+                .collect(Collectors.toList()));
       }
       return aggregator;
     } else {

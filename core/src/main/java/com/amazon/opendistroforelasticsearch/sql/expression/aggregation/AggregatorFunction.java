@@ -15,8 +15,6 @@
 
 package com.amazon.opendistroforelasticsearch.sql.expression.aggregation;
 
-import static com.amazon.opendistroforelasticsearch.sql.data.type.ExprCoreType.ARRAY;
-import static com.amazon.opendistroforelasticsearch.sql.data.type.ExprCoreType.BOOLEAN;
 import static com.amazon.opendistroforelasticsearch.sql.data.type.ExprCoreType.DATE;
 import static com.amazon.opendistroforelasticsearch.sql.data.type.ExprCoreType.DATETIME;
 import static com.amazon.opendistroforelasticsearch.sql.data.type.ExprCoreType.DOUBLE;
@@ -24,12 +22,10 @@ import static com.amazon.opendistroforelasticsearch.sql.data.type.ExprCoreType.F
 import static com.amazon.opendistroforelasticsearch.sql.data.type.ExprCoreType.INTEGER;
 import static com.amazon.opendistroforelasticsearch.sql.data.type.ExprCoreType.LONG;
 import static com.amazon.opendistroforelasticsearch.sql.data.type.ExprCoreType.STRING;
-import static com.amazon.opendistroforelasticsearch.sql.data.type.ExprCoreType.STRUCT;
 import static com.amazon.opendistroforelasticsearch.sql.data.type.ExprCoreType.TIME;
 import static com.amazon.opendistroforelasticsearch.sql.data.type.ExprCoreType.TIMESTAMP;
 
 import com.amazon.opendistroforelasticsearch.sql.data.type.ExprCoreType;
-import com.amazon.opendistroforelasticsearch.sql.data.type.ExprType;
 import com.amazon.opendistroforelasticsearch.sql.expression.function.BuiltinFunctionName;
 import com.amazon.opendistroforelasticsearch.sql.expression.function.BuiltinFunctionRepository;
 import com.amazon.opendistroforelasticsearch.sql.expression.function.FunctionBuilder;
@@ -37,27 +33,22 @@ import com.amazon.opendistroforelasticsearch.sql.expression.function.FunctionNam
 import com.amazon.opendistroforelasticsearch.sql.expression.function.FunctionResolver;
 import com.amazon.opendistroforelasticsearch.sql.expression.function.FunctionSignature;
 import com.google.common.collect.ImmutableMap;
-
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
-import java.util.List;
 import java.util.stream.Collectors;
 
 import lombok.experimental.UtilityClass;
 
 /**
- * The definition of aggregator function
- * avg, Accepts two numbers and produces a number.
- * sum, Accepts two numbers and produces a number.
- * max, Accepts two numbers and produces a number.
- * min, Accepts two numbers and produces a number.
- * count, Accepts two numbers and produces a number.
+ * The definition of aggregator function avg, Accepts two numbers and produces a number. sum,
+ * Accepts two numbers and produces a number. max, Accepts two numbers and produces a number. min,
+ * Accepts two numbers and produces a number. count, Accepts two numbers and produces a number.
  */
 @UtilityClass
 public class AggregatorFunction {
+
   /**
    * Register Aggregation Function.
+   *
    * @param repository {@link BuiltinFunctionRepository}.
    */
   public static void register(BuiltinFunctionRepository repository) {
@@ -66,6 +57,18 @@ public class AggregatorFunction {
     repository.register(count());
     repository.register(min());
     repository.register(max());
+    repository.register(approxPercentile());
+  }
+
+  private static FunctionResolver approxPercentile() {
+    FunctionName functionName = BuiltinFunctionName.APPROX_PERCENTILE.getName();
+    return new FunctionResolver(
+        functionName,
+        new ImmutableMap.Builder<FunctionSignature, FunctionBuilder>()
+            .put(new FunctionSignature(functionName, Collections.singletonList(DOUBLE)),
+                arguments -> new ApproxPercentileAggregator(arguments, DOUBLE))
+            .build()
+    );
   }
 
   private static FunctionResolver avg() {
@@ -82,9 +85,15 @@ public class AggregatorFunction {
   private static FunctionResolver count() {
     FunctionName functionName = BuiltinFunctionName.COUNT.getName();
     FunctionResolver functionResolver = new FunctionResolver(functionName,
-        ExprCoreType.coreTypes().stream().collect(Collectors.toMap(
-          type -> new FunctionSignature(functionName, Collections.singletonList(type)),
-          type -> arguments -> new CountAggregator(arguments, INTEGER))));
+        ExprCoreType.coreTypes()
+            .stream()
+            .collect(Collectors.toMap(
+                type -> new FunctionSignature(
+                    functionName,
+                    Collections.singletonList(
+                        type)),
+                type -> arguments -> new CountAggregator(
+                    arguments, INTEGER))));
     return functionResolver;
   }
 

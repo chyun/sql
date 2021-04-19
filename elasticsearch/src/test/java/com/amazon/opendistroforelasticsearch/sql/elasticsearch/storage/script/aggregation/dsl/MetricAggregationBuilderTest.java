@@ -17,6 +17,7 @@
 
 package com.amazon.opendistroforelasticsearch.sql.elasticsearch.storage.script.aggregation.dsl;
 
+import static com.amazon.opendistroforelasticsearch.sql.data.type.ExprCoreType.DOUBLE;
 import static com.amazon.opendistroforelasticsearch.sql.data.type.ExprCoreType.INTEGER;
 import static com.amazon.opendistroforelasticsearch.sql.expression.DSL.literal;
 import static com.amazon.opendistroforelasticsearch.sql.expression.DSL.named;
@@ -25,7 +26,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
+import com.amazon.opendistroforelasticsearch.sql.ast.expression.Argument;
 import com.amazon.opendistroforelasticsearch.sql.elasticsearch.storage.serialization.ExpressionSerializer;
+import com.amazon.opendistroforelasticsearch.sql.expression.DSL;
+import com.amazon.opendistroforelasticsearch.sql.expression.aggregation.ApproxPercentileAggregator;
 import com.amazon.opendistroforelasticsearch.sql.expression.aggregation.AvgAggregator;
 import com.amazon.opendistroforelasticsearch.sql.expression.aggregation.CountAggregator;
 import com.amazon.opendistroforelasticsearch.sql.expression.aggregation.MaxAggregator;
@@ -156,6 +160,28 @@ class MetricAggregationBuilderTest {
             Arrays.asList(
                 named("min(age)",
                     new MinAggregator(Arrays.asList(ref("age", INTEGER)), INTEGER)))));
+  }
+
+  @Test
+  void should_build_approx_percentile_aggregation() {
+    assertEquals("{\n"
+            + "  \"<99.9>approx_percentile(age)\" : {\n"
+            + "    \"percentiles\" : {\n"
+            + "      \"field\" : \"age\",\n"
+            + "      \"percents\" : [ 99.9 ],\n"
+            + "      \"keyed\" : true,\n"
+            + "      \"tdigest\" : {\n"
+            + "        \"compression\" : 100.0\n"
+            + "      }\n"
+            + "    }\n"
+            + "  }\n"
+            + "}",
+        buildQuery(
+            Arrays.asList(
+                named("<99.9>approx_percentile(age)",
+                    new ApproxPercentileAggregator(Arrays.asList(ref("age", INTEGER)), DOUBLE)
+                        .initValues(Arrays.asList(
+                            literal(99.9)))))));
   }
 
   @Test

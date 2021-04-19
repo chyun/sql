@@ -15,6 +15,7 @@
 
 package com.amazon.opendistroforelasticsearch.sql.analysis;
 
+import static com.amazon.opendistroforelasticsearch.sql.ast.dsl.AstDSL.doubleLiteral;
 import static com.amazon.opendistroforelasticsearch.sql.ast.dsl.AstDSL.field;
 import static com.amazon.opendistroforelasticsearch.sql.ast.dsl.AstDSL.function;
 import static com.amazon.opendistroforelasticsearch.sql.ast.dsl.AstDSL.intLiteral;
@@ -39,8 +40,10 @@ import com.amazon.opendistroforelasticsearch.sql.data.model.ExprValueUtils;
 import com.amazon.opendistroforelasticsearch.sql.exception.SemanticCheckException;
 import com.amazon.opendistroforelasticsearch.sql.expression.DSL;
 import com.amazon.opendistroforelasticsearch.sql.expression.Expression;
+import com.amazon.opendistroforelasticsearch.sql.expression.LiteralExpression;
 import com.amazon.opendistroforelasticsearch.sql.expression.config.ExpressionConfig;
 import com.amazon.opendistroforelasticsearch.sql.expression.window.aggregation.AggregateWindowFunction;
+import java.util.Arrays;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.context.annotation.Configuration;
@@ -176,6 +179,14 @@ class ExpressionAnalyzerTest extends AnalyzerTestBase {
 
   @SuppressWarnings("unchecked")
   @Test
+  public void approx_percentile_aggregate() {
+    assertAnalyzeEqual(
+        dsl.approxPercentile(DSL.literal(99.9), DSL.ref("integer_value", INTEGER)),
+        AstDSL.aggregate("approx_percentile", qualifiedName("integer_value"), doubleLiteral(99.9))
+    );
+  }
+
+  @Test
   public void aggregate_window_function() {
     assertAnalyzeEqual(
         new AggregateWindowFunction(dsl.avg(DSL.ref("integer_value", INTEGER))),
@@ -286,7 +297,7 @@ class ExpressionAnalyzerTest extends AnalyzerTestBase {
   }
 
   protected void assertAnalyzeEqual(Expression expected,
-                                    UnresolvedExpression unresolvedExpression) {
+      UnresolvedExpression unresolvedExpression) {
     assertEquals(expected, analyze(unresolvedExpression));
   }
 }

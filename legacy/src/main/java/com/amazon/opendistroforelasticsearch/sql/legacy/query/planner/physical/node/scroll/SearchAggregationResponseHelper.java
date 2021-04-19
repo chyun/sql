@@ -23,6 +23,7 @@ import org.elasticsearch.search.aggregations.bucket.histogram.Histogram;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.metrics.NumericMetricsAggregation;
 import org.elasticsearch.search.aggregations.metrics.Percentile;
+import org.elasticsearch.search.aggregations.metrics.PercentileRanks;
 import org.elasticsearch.search.aggregations.metrics.Percentiles;
 
 import java.util.ArrayList;
@@ -60,10 +61,10 @@ public class SearchAggregationResponseHelper {
             } else if (aggregation instanceof NumericMetricsAggregation.SingleValue) {
                 resultMap.put(aggregation.getName(), ((NumericMetricsAggregation.SingleValue) aggregation).value());
             } else if (aggregation instanceof Percentiles) {
-                Percentiles percentiles = (Percentiles) aggregation;
+                Iterable<Percentile> percentiles = (Iterable<Percentile>) aggregation;
                 resultMap.putAll((Map<String, Double>) StreamSupport.stream(percentiles.spliterator(), false)
                         .collect(Collectors.toMap(
-                                (percentile) -> String.format("%s_%s", percentiles.getName(), percentile.getPercent()),
+                                (percentile) -> String.format("%s_%s", aggregation.getName(), percentile.getPercent()),
                                 Percentile::getValue, (v1, v2) -> {
                                     throw new IllegalArgumentException(
                                             String.format("Duplicate key for values %s and %s", v1, v2));

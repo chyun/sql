@@ -33,18 +33,17 @@ import org.junit.jupiter.api.Test;
 
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 class ElasticsearchAggregationResponseParserTest {
-
-  /**
-   * SELECT MAX(age) as max FROM accounts.
-   */
   @Test
-  void no_bucket_one_metric_should_pass() {
+  void percentile_aggregate_should_pass() {
     String response = "{\n"
-        + "  \"max#max\": {\n"
-        + "    \"value\": 40\n"
+        + "  \"percentiles_bucket#percentiles\": {\n"
+        + "    \"values\": {\n"
+        + "      \"99.0\": 985.0\n"
+        + "    }\n"
         + "  }\n"
         + "}";
-    assertThat(parse(response), contains(entry("max", 40d)));
+    assertThat(parse(response),
+        contains(entry("percentiles", 985.0d)));
   }
 
   /**
