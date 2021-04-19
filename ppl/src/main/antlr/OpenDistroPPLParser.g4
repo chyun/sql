@@ -125,6 +125,7 @@ statsFunction
     : statsFunctionName LT_PRTHS valueExpression RT_PRTHS           #statsFunctionCall
     | COUNT LT_PRTHS RT_PRTHS                                       #countAllFunctionCall
     | percentileAggFunction                                         #percentileAggFunctionCall
+    | approxPercentileAggFunction                                   #approxPercentileAggFunctionCall
     ;
 
 statsFunctionName
@@ -132,8 +133,10 @@ statsFunctionName
     ;
 
 percentileAggFunction
-    : PERCENTILE '<' value=integerLiteral '>' LT_PRTHS aggField=fieldExpression RT_PRTHS
-    ;
+    : PERCENTILE '<' value=integerLiteral '>' LT_PRTHS aggField=fieldExpression RT_PRTHS;
+
+approxPercentileAggFunction
+    : APPROX_PERCENTILE LT_PRTHS aggField=fieldExpression COMMA quantile=decimalLiteral RT_PRTHS;
 
 /** expressions */
 expression

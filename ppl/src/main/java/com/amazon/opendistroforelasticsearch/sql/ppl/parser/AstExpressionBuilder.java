@@ -63,6 +63,7 @@ import com.amazon.opendistroforelasticsearch.sql.ast.expression.QualifiedName;
 import com.amazon.opendistroforelasticsearch.sql.ast.expression.UnresolvedExpression;
 import com.amazon.opendistroforelasticsearch.sql.ast.expression.Xor;
 import com.amazon.opendistroforelasticsearch.sql.common.utils.StringUtils;
+import com.amazon.opendistroforelasticsearch.sql.ppl.antlr.parser.OpenDistroPPLParser;
 import com.amazon.opendistroforelasticsearch.sql.ppl.antlr.parser.OpenDistroPPLParserBaseVisitor;
 import com.amazon.opendistroforelasticsearch.sql.ppl.utils.ArgumentFactory;
 import com.google.common.collect.ImmutableMap;
@@ -196,6 +197,13 @@ public class AstExpressionBuilder extends OpenDistroPPLParserBaseVisitor<Unresol
   public UnresolvedExpression visitPercentileAggFunction(PercentileAggFunctionContext ctx) {
     return new AggregateFunction(ctx.PERCENTILE().getText(), visit(ctx.aggField),
         Collections.singletonList(new Argument("rank", (Literal) visit(ctx.value))));
+  }
+
+  @Override
+  public UnresolvedExpression visitApproxPercentileAggFunction(
+          OpenDistroPPLParser.ApproxPercentileAggFunctionContext ctx) {
+    return new AggregateFunction(ctx.APPROX_PERCENTILE().getText(), visit(ctx.aggField),
+                                 Collections.singletonList(new Argument("quantile", (Literal) visit(ctx.quantile))));
   }
 
   /**

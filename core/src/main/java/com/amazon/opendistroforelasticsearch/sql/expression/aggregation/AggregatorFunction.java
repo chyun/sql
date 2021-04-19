@@ -15,8 +15,6 @@
 
 package com.amazon.opendistroforelasticsearch.sql.expression.aggregation;
 
-import static com.amazon.opendistroforelasticsearch.sql.data.type.ExprCoreType.ARRAY;
-import static com.amazon.opendistroforelasticsearch.sql.data.type.ExprCoreType.BOOLEAN;
 import static com.amazon.opendistroforelasticsearch.sql.data.type.ExprCoreType.DATE;
 import static com.amazon.opendistroforelasticsearch.sql.data.type.ExprCoreType.DATETIME;
 import static com.amazon.opendistroforelasticsearch.sql.data.type.ExprCoreType.DOUBLE;
@@ -24,12 +22,10 @@ import static com.amazon.opendistroforelasticsearch.sql.data.type.ExprCoreType.F
 import static com.amazon.opendistroforelasticsearch.sql.data.type.ExprCoreType.INTEGER;
 import static com.amazon.opendistroforelasticsearch.sql.data.type.ExprCoreType.LONG;
 import static com.amazon.opendistroforelasticsearch.sql.data.type.ExprCoreType.STRING;
-import static com.amazon.opendistroforelasticsearch.sql.data.type.ExprCoreType.STRUCT;
 import static com.amazon.opendistroforelasticsearch.sql.data.type.ExprCoreType.TIME;
 import static com.amazon.opendistroforelasticsearch.sql.data.type.ExprCoreType.TIMESTAMP;
 
 import com.amazon.opendistroforelasticsearch.sql.data.type.ExprCoreType;
-import com.amazon.opendistroforelasticsearch.sql.data.type.ExprType;
 import com.amazon.opendistroforelasticsearch.sql.expression.function.BuiltinFunctionName;
 import com.amazon.opendistroforelasticsearch.sql.expression.function.BuiltinFunctionRepository;
 import com.amazon.opendistroforelasticsearch.sql.expression.function.FunctionBuilder;
@@ -37,11 +33,7 @@ import com.amazon.opendistroforelasticsearch.sql.expression.function.FunctionNam
 import com.amazon.opendistroforelasticsearch.sql.expression.function.FunctionResolver;
 import com.amazon.opendistroforelasticsearch.sql.expression.function.FunctionSignature;
 import com.google.common.collect.ImmutableMap;
-
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
-import java.util.List;
 import java.util.stream.Collectors;
 
 import lombok.experimental.UtilityClass;
@@ -58,6 +50,7 @@ import lombok.experimental.UtilityClass;
 public class AggregatorFunction {
   /**
    * Register Aggregation Function.
+   *
    * @param repository {@link BuiltinFunctionRepository}.
    */
   public static void register(BuiltinFunctionRepository repository) {
@@ -66,6 +59,18 @@ public class AggregatorFunction {
     repository.register(count());
     repository.register(min());
     repository.register(max());
+    repository.register(approxPercentile());
+  }
+
+  private static FunctionResolver approxPercentile() {
+    FunctionName functionName = BuiltinFunctionName.APPROX_PERCENTILE.getName();
+    return new FunctionResolver(
+        functionName,
+        new ImmutableMap.Builder<FunctionSignature, FunctionBuilder>()
+            .put(new FunctionSignature(functionName, Collections.singletonList(DOUBLE)),
+                 arguments -> new ApproxPercentileAggregator(arguments, DOUBLE))
+            .build()
+    );
   }
 
   private static FunctionResolver avg() {
@@ -74,7 +79,7 @@ public class AggregatorFunction {
         functionName,
         new ImmutableMap.Builder<FunctionSignature, FunctionBuilder>()
             .put(new FunctionSignature(functionName, Collections.singletonList(DOUBLE)),
-                arguments -> new AvgAggregator(arguments, DOUBLE))
+                 arguments -> new AvgAggregator(arguments, DOUBLE))
             .build()
     );
   }
@@ -82,9 +87,15 @@ public class AggregatorFunction {
   private static FunctionResolver count() {
     FunctionName functionName = BuiltinFunctionName.COUNT.getName();
     FunctionResolver functionResolver = new FunctionResolver(functionName,
-        ExprCoreType.coreTypes().stream().collect(Collectors.toMap(
-          type -> new FunctionSignature(functionName, Collections.singletonList(type)),
-          type -> arguments -> new CountAggregator(arguments, INTEGER))));
+                                                             ExprCoreType.coreTypes()
+                                                                 .stream()
+                                                                 .collect(Collectors.toMap(
+                                                                     type -> new FunctionSignature(
+                                                                         functionName,
+                                                                         Collections.singletonList(
+                                                                             type)),
+                                                                     type -> arguments -> new CountAggregator(
+                                                                         arguments, INTEGER))));
     return functionResolver;
   }
 
@@ -94,13 +105,13 @@ public class AggregatorFunction {
         functionName,
         new ImmutableMap.Builder<FunctionSignature, FunctionBuilder>()
             .put(new FunctionSignature(functionName, Collections.singletonList(INTEGER)),
-                arguments -> new SumAggregator(arguments, INTEGER))
+                 arguments -> new SumAggregator(arguments, INTEGER))
             .put(new FunctionSignature(functionName, Collections.singletonList(LONG)),
-                arguments -> new SumAggregator(arguments, LONG))
+                 arguments -> new SumAggregator(arguments, LONG))
             .put(new FunctionSignature(functionName, Collections.singletonList(FLOAT)),
-                arguments -> new SumAggregator(arguments, FLOAT))
+                 arguments -> new SumAggregator(arguments, FLOAT))
             .put(new FunctionSignature(functionName, Collections.singletonList(DOUBLE)),
-                arguments -> new SumAggregator(arguments, DOUBLE))
+                 arguments -> new SumAggregator(arguments, DOUBLE))
             .build()
     );
   }
@@ -111,23 +122,23 @@ public class AggregatorFunction {
         functionName,
         new ImmutableMap.Builder<FunctionSignature, FunctionBuilder>()
             .put(new FunctionSignature(functionName, Collections.singletonList(INTEGER)),
-                arguments -> new MinAggregator(arguments, INTEGER))
+                 arguments -> new MinAggregator(arguments, INTEGER))
             .put(new FunctionSignature(functionName, Collections.singletonList(LONG)),
-                arguments -> new MinAggregator(arguments, LONG))
+                 arguments -> new MinAggregator(arguments, LONG))
             .put(new FunctionSignature(functionName, Collections.singletonList(FLOAT)),
-                arguments -> new MinAggregator(arguments, FLOAT))
+                 arguments -> new MinAggregator(arguments, FLOAT))
             .put(new FunctionSignature(functionName, Collections.singletonList(DOUBLE)),
-                arguments -> new MinAggregator(arguments, DOUBLE))
+                 arguments -> new MinAggregator(arguments, DOUBLE))
             .put(new FunctionSignature(functionName, Collections.singletonList(STRING)),
-                arguments -> new MinAggregator(arguments, STRING))
+                 arguments -> new MinAggregator(arguments, STRING))
             .put(new FunctionSignature(functionName, Collections.singletonList(DATE)),
-                arguments -> new MinAggregator(arguments, DATE))
+                 arguments -> new MinAggregator(arguments, DATE))
             .put(new FunctionSignature(functionName, Collections.singletonList(DATETIME)),
-                arguments -> new MinAggregator(arguments, DATETIME))
+                 arguments -> new MinAggregator(arguments, DATETIME))
             .put(new FunctionSignature(functionName, Collections.singletonList(TIME)),
-                arguments -> new MinAggregator(arguments, TIME))
+                 arguments -> new MinAggregator(arguments, TIME))
             .put(new FunctionSignature(functionName, Collections.singletonList(TIMESTAMP)),
-                arguments -> new MinAggregator(arguments, TIMESTAMP))
+                 arguments -> new MinAggregator(arguments, TIMESTAMP))
             .build());
   }
 
@@ -137,23 +148,23 @@ public class AggregatorFunction {
         functionName,
         new ImmutableMap.Builder<FunctionSignature, FunctionBuilder>()
             .put(new FunctionSignature(functionName, Collections.singletonList(INTEGER)),
-                arguments -> new MaxAggregator(arguments, INTEGER))
+                 arguments -> new MaxAggregator(arguments, INTEGER))
             .put(new FunctionSignature(functionName, Collections.singletonList(LONG)),
-                arguments -> new MaxAggregator(arguments, LONG))
+                 arguments -> new MaxAggregator(arguments, LONG))
             .put(new FunctionSignature(functionName, Collections.singletonList(FLOAT)),
-                arguments -> new MaxAggregator(arguments, FLOAT))
+                 arguments -> new MaxAggregator(arguments, FLOAT))
             .put(new FunctionSignature(functionName, Collections.singletonList(DOUBLE)),
-                arguments -> new MaxAggregator(arguments, DOUBLE))
+                 arguments -> new MaxAggregator(arguments, DOUBLE))
             .put(new FunctionSignature(functionName, Collections.singletonList(STRING)),
-                arguments -> new MaxAggregator(arguments, STRING))
+                 arguments -> new MaxAggregator(arguments, STRING))
             .put(new FunctionSignature(functionName, Collections.singletonList(DATE)),
-                arguments -> new MaxAggregator(arguments, DATE))
+                 arguments -> new MaxAggregator(arguments, DATE))
             .put(new FunctionSignature(functionName, Collections.singletonList(DATETIME)),
-                arguments -> new MaxAggregator(arguments, DATETIME))
+                 arguments -> new MaxAggregator(arguments, DATETIME))
             .put(new FunctionSignature(functionName, Collections.singletonList(TIME)),
-                arguments -> new MaxAggregator(arguments, TIME))
+                 arguments -> new MaxAggregator(arguments, TIME))
             .put(new FunctionSignature(functionName, Collections.singletonList(TIMESTAMP)),
-                arguments -> new MaxAggregator(arguments, TIMESTAMP))
+                 arguments -> new MaxAggregator(arguments, TIMESTAMP))
             .build()
     );
   }

@@ -344,6 +344,26 @@ public class AstExpressionBuilderTest extends AstBuilderTest {
         ));
   }
 
+    @Test
+    public void testApproxPercentileAggFuncExpr() {
+        assertEqual("source=t | stats approx_percentile(a, 0.95)",
+                    agg(
+                            relation("t"),
+                            exprList(
+                                    alias("approx_percentile(a, 0.95)",
+                                          aggregate(
+                                                  "approx_percentile",
+                                                  field("a"),
+                                                  argument("quantile", doubleLiteral(0.95))
+                                          )
+                                    )
+                            ),
+                            emptyList(),
+                            emptyList(),
+                            defaultStatsArgs()
+                    ));
+    }
+
   @Test
   public void testCountFuncCallExpr() {
     assertEqual("source=t | stats count() by b",
