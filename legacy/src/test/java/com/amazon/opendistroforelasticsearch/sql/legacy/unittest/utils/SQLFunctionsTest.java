@@ -18,6 +18,7 @@ package com.amazon.opendistroforelasticsearch.sql.legacy.unittest.utils;
 import com.alibaba.druid.sql.ast.SQLDataType;
 import com.alibaba.druid.sql.ast.SQLDataTypeImpl;
 import com.alibaba.druid.sql.ast.expr.SQLCastExpr;
+import com.alibaba.druid.sql.ast.expr.SQLCharExpr;
 import com.alibaba.druid.sql.ast.expr.SQLIdentifierExpr;
 import com.alibaba.druid.sql.ast.expr.SQLIntegerExpr;
 import com.alibaba.druid.sql.ast.expr.SQLMethodInvokeExpr;
@@ -62,6 +63,24 @@ public class SQLFunctionsTest {
 
         assertTrue(assign.v1().matches("assign_[0-9]+"));
         assertTrue(assign.v2().matches("def assign_[0-9]+ = 10;return assign_[0-9]+;"));
+    }
+
+    @Test
+    public void testTimestamp() throws SqlParseException {
+        SQLFunctions sqlFunctions = new SQLFunctions();
+
+        final SQLCharExpr sqlCharExpr = new SQLCharExpr("2021-04-20 12:00:00");
+
+        final Tuple<String, String> timestamp = sqlFunctions.function("timestamp",
+            ImmutableList.of(new KVValue(null, sqlCharExpr)),
+            null,
+            true);
+
+        assertEquals(Tuple.tuple("timestamp_1",
+            "def timestamp_1 = DateTimeFormatter.ofPattern('yyyy-MM-dd HH:mm:ss')"
+                + ".format(DateTimeFormatter.ISO_DATE_TIME.parse('2021-04-20T12:00:00'.toString()));"
+                + "return timestamp_1;"),
+            timestamp);
     }
 
     @Test

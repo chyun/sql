@@ -36,6 +36,8 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.elasticsearch.common.collect.Tuple;
 
 import java.util.HashMap;
@@ -862,11 +864,22 @@ public class SQLFunctions {
     }
 
     private Tuple<String, String> timestamp(SQLExpr field) {
-        String name = nextId("timestamp");
-        return new Tuple<>(name, def(name,
-                "DateTimeFormatter.ofPattern('yyyy-MM-dd HH:mm:ss').format("
-                        + "DateTimeFormatter.ISO_DATE_TIME.parse("
-                        + getPropertyOrStringValue(field) + ".toString()))"));
+      String name = nextId("timestamp");
+      if (!isProperty(field)) {
+        String timeStr = ((SQLCharExpr) field).getText();
+        String format = "((19|20)[0-9]{2})-(0?[1-9]|1[012])-(0?[1-9]|[12][0-9]|3[01])"
+            + "\\s([01]?[0-9]|2[0-3]):[0-5]?[0-9]:[0-5]?[0-9]";
+        Pattern pattern = Pattern.compile(format);
+        Matcher matcher = pattern.matcher(timeStr);
+        if (matcher.matches()) {
+          timeStr = timeStr.replace(" ", "T");
+          ((SQLCharExpr) field).setText(timeStr);
+        }
+      }
+      return new Tuple<>(name, def(name,
+          "DateTimeFormatter.ofPattern('yyyy-MM-dd HH:mm:ss').format("
+              + "DateTimeFormatter.ISO_DATE_TIME.parse("
+              + getPropertyOrStringValue(field) + ".toString()))"));
     }
 
     private Tuple<String, String> maketime(SQLExpr hr, SQLExpr min, SQLExpr sec) {
