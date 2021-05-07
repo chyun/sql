@@ -18,6 +18,7 @@ package com.amazon.opendistroforelasticsearch.sql.analysis;
 import com.amazon.opendistroforelasticsearch.sql.analysis.symbol.Namespace;
 import com.amazon.opendistroforelasticsearch.sql.analysis.symbol.Symbol;
 import com.amazon.opendistroforelasticsearch.sql.analysis.symbol.SymbolTable;
+import com.amazon.opendistroforelasticsearch.sql.data.type.ExprCoreType;
 import com.amazon.opendistroforelasticsearch.sql.data.type.ExprType;
 import com.amazon.opendistroforelasticsearch.sql.exception.SemanticCheckException;
 import com.amazon.opendistroforelasticsearch.sql.expression.Expression;
@@ -60,8 +61,7 @@ public class TypeEnvironment implements Environment<Symbol, ExprType> {
         return typeOptional.get();
       }
     }
-    throw new SemanticCheckException(
-        String.format("can't resolve %s in type env", symbol));
+    return ExprCoreType.UNDEFINED;
   }
 
   /**
