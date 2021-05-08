@@ -143,11 +143,10 @@ The example calculates the approx percentile value of all the accounts.
 
 PPL query::
 
-    od> source=accounts | stats approx_percentile(age);
+    od> source=accounts | stats approx_percentile<99.9>(age);
     fetched rows / total rows = 1/1
-    +--------------------------+
-    | approx_percentile(age)   |
-    |--------------------------+
-    | 28                       |
-    | 36                       |
-    +--------------------------+
+    +--------------------------------+
+    | approx_percentile<99.9>(age)   |
+    |--------------------------------+
+    | 36.0                           |
+    +--------------------------------+

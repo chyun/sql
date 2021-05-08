@@ -56,6 +56,7 @@ import com.amazon.opendistroforelasticsearch.sql.data.model.ExprTimeValue;
 import com.amazon.opendistroforelasticsearch.sql.data.model.ExprTimestampValue;
 import com.amazon.opendistroforelasticsearch.sql.data.model.ExprTupleValue;
 import com.amazon.opendistroforelasticsearch.sql.data.model.ExprValue;
+import com.amazon.opendistroforelasticsearch.sql.data.type.ExprCoreType;
 import com.amazon.opendistroforelasticsearch.sql.data.type.ExprType;
 import com.amazon.opendistroforelasticsearch.sql.elasticsearch.data.utils.Content;
 import com.amazon.opendistroforelasticsearch.sql.elasticsearch.data.utils.ElasticsearchJsonContent;
@@ -172,7 +173,7 @@ public class ElasticsearchExprValueFactory {
     if (typeMapping.containsKey(field)) {
       return typeMapping.get(field);
     } else {
-      throw new IllegalStateException(String.format("No type found for field: %s.", field));
+      return ExprCoreType.UNDEFINED;
     }
   }
 
